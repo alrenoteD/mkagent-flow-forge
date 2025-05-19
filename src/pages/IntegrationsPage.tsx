@@ -6,14 +6,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const IntegrationsPage = () => {
   const [isWhatsAppDialogOpen, setIsWhatsAppDialogOpen] = useState(false);
   const [isOpenRouterDialogOpen, setIsOpenRouterDialogOpen] = useState(false);
+  const [isHuggingFaceDialogOpen, setIsHuggingFaceDialogOpen] = useState(false);
   const [whatsappConnected, setWhatsAppConnected] = useState(false);
   const [openRouterConnected, setOpenRouterConnected] = useState(false);
+  const [huggingfaceConnected, setHuggingFaceConnected] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [whatsAppProvider, setWhatsAppProvider] = useState("twilio");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [accountSid, setAccountSid] = useState("");
+  const [authToken, setAuthToken] = useState("");
   const { toast } = useToast();
 
   const handleWhatsAppConnect = () => {
@@ -24,23 +31,53 @@ const IntegrationsPage = () => {
     setIsOpenRouterDialogOpen(true);
   };
 
+  const handleHuggingFaceConnect = () => {
+    setIsHuggingFaceDialogOpen(true);
+  };
+
   const handleWhatsAppSubmit = () => {
-    if (!apiKey.trim()) {
+    // Basic validation based on the selected provider
+    let isValid = false;
+    
+    switch(whatsAppProvider) {
+      case "twilio":
+        isValid = accountSid.trim() !== "" && authToken.trim() !== "";
+        break;
+      case "zapi":
+      case "meta":
+      case "360dialog":
+      case "ultramsg":
+        isValid = apiKey.trim() !== "";
+        break;
+    }
+    
+    if (!isValid) {
       toast({
         title: "Error",
-        description: "Please enter a valid API key",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
     }
     
+    // In a real app, we would save these credentials securely
+    localStorage.setItem("whatsapp-provider", whatsAppProvider);
+    
+    if (whatsAppProvider === "twilio") {
+      localStorage.setItem("twilio-account-sid", accountSid);
+      localStorage.setItem("twilio-auth-token", authToken);
+      localStorage.setItem("twilio-phone", phoneNumber);
+    } else {
+      localStorage.setItem(`${whatsAppProvider}-api-key`, apiKey);
+    }
+    
     setWhatsAppConnected(true);
-    setApiKey("");
+    resetForm();
     setIsWhatsAppDialogOpen(false);
     
     toast({
       title: "WhatsApp Connected",
-      description: "WhatsApp integration has been successfully set up.",
+      description: `WhatsApp integration (${whatsAppProvider}) has been successfully set up.`,
     });
   };
 
@@ -54,6 +91,7 @@ const IntegrationsPage = () => {
       return;
     }
     
+    localStorage.setItem("openrouter-api-key", apiKey);
     setOpenRouterConnected(true);
     setApiKey("");
     setIsOpenRouterDialogOpen(false);
@@ -64,8 +102,42 @@ const IntegrationsPage = () => {
     });
   };
 
+  const handleHuggingFaceSubmit = () => {
+    if (!apiKey.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid API key",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    localStorage.setItem("huggingface-api-key", apiKey);
+    setHuggingFaceConnected(true);
+    setApiKey("");
+    setIsHuggingFaceDialogOpen(false);
+    
+    toast({
+      title: "HuggingFace Connected",
+      description: "HuggingFace Inference API has been successfully set up.",
+    });
+  };
+
   const handleWhatsAppDisconnect = () => {
+    const provider = localStorage.getItem("whatsapp-provider") || "";
+    
+    // Remove all WhatsApp related storage items
+    if (provider === "twilio") {
+      localStorage.removeItem("twilio-account-sid");
+      localStorage.removeItem("twilio-auth-token");
+      localStorage.removeItem("twilio-phone");
+    } else if (provider) {
+      localStorage.removeItem(`${provider}-api-key`);
+    }
+    
+    localStorage.removeItem("whatsapp-provider");
     setWhatsAppConnected(false);
+    
     toast({
       title: "WhatsApp Disconnected",
       description: "WhatsApp integration has been disabled.",
@@ -73,11 +145,30 @@ const IntegrationsPage = () => {
   };
 
   const handleOpenRouterDisconnect = () => {
+    localStorage.removeItem("openrouter-api-key");
     setOpenRouterConnected(false);
+    
     toast({
       title: "OpenRouter Disconnected",
       description: "OpenRouter integration has been disabled.",
     });
+  };
+
+  const handleHuggingFaceDisconnect = () => {
+    localStorage.removeItem("huggingface-api-key");
+    setHuggingFaceConnected(false);
+    
+    toast({
+      title: "HuggingFace Disconnected",
+      description: "HuggingFace integration has been disabled.",
+    });
+  };
+
+  const resetForm = () => {
+    setApiKey("");
+    setAccountSid("");
+    setAuthToken("");
+    setPhoneNumber("");
   };
 
   return (
@@ -93,7 +184,7 @@ const IntegrationsPage = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <IntegrationCard
             title="WhatsApp"
-            description="Connect your agents to WhatsApp using Twilio, Z-API, or the official Meta API"
+            description="Connect your agents to WhatsApp using Twilio, Z-API, Meta API, 360Dialog, or UltraMsg"
             icon={
               <svg viewBox="0 0 1024 1024" fill="currentColor" className="h-6 w-6">
                 <path d="M713.5 599.9c-10.9-5.6-65.2-32.2-75.3-35.8-10.1-3.8-17.5-5.6-24.8 5.6-7.4 11.1-28.4 35.8-35 43.3-6.4 7.4-12.9 8.3-23.8 2.8-64.8-32.4-107.3-57.8-150-131.1-11.3-19.5 11.3-18.1 32.4-60.2 3.6-7.4 1.8-13.7-1-19.3-2.8-5.6-24.8-59.8-34-81.9-9-21.9-18.1-18.9-24.8-19.2-6.4-.2-13.7-.2-21.1-.2-7.4 0-19.3 2.8-29.4 13.7-10.1 11.1-38.6 37.8-38.6 92s39.5 106.7 44.9 114.1c5.6 7.4 77.9 118.9 188.9 167 26.4 11.4 47 18.3 63.1 23.4 26.5 8.4 50.6 7.2 69.7 4.3 21.3-3.1 65.2-26.4 74.3-52.5 9-25.9 9-48.4 6.4-53.1-2.7-4.9-10.1-7.7-21-13z" />
@@ -128,48 +219,138 @@ const IntegrationsPage = () => {
                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
               </svg>
             }
-            isConnected={false}
-            onConnect={() => {}}
-            onDisconnect={() => {}}
+            isConnected={huggingfaceConnected}
+            onConnect={handleHuggingFaceConnect}
+            onDisconnect={handleHuggingFaceDisconnect}
           />
         </div>
       </div>
       
       {/* WhatsApp Integration Dialog */}
       <Dialog open={isWhatsAppDialogOpen} onOpenChange={setIsWhatsAppDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Connect WhatsApp Integration</DialogTitle>
             <DialogDescription>
-              Enter your Twilio or Z-API credentials to connect your WhatsApp account.
+              Choose your WhatsApp provider and enter the required credentials
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="provider" className="text-right">
-                Provider
-              </Label>
-              <select id="provider" className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                <option value="twilio">Twilio</option>
-                <option value="zapi">Z-API</option>
-                <option value="meta">Meta API</option>
-                <option value="360dialog">360Dialog</option>
-              </select>
-            </div>
+          <Tabs defaultValue="twilio" onValueChange={setWhatsAppProvider}>
+            <TabsList className="grid grid-cols-5 mb-4">
+              <TabsTrigger value="twilio">Twilio</TabsTrigger>
+              <TabsTrigger value="zapi">Z-API</TabsTrigger>
+              <TabsTrigger value="meta">Meta API</TabsTrigger>
+              <TabsTrigger value="360dialog">360Dialog</TabsTrigger>
+              <TabsTrigger value="ultramsg">UltraMsg</TabsTrigger>
+            </TabsList>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="apiKey" className="text-right">
-                API Key
-              </Label>
-              <Input
-                id="apiKey"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
+            <TabsContent value="twilio" className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="account-sid" className="text-right">
+                    Account SID
+                  </Label>
+                  <Input
+                    id="account-sid"
+                    value={accountSid}
+                    onChange={(e) => setAccountSid(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="auth-token" className="text-right">
+                    Auth Token
+                  </Label>
+                  <Input
+                    id="auth-token"
+                    type="password"
+                    value={authToken}
+                    onChange={(e) => setAuthToken(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone-number" className="text-right">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="phone-number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="zapi" className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="zapi-key" className="text-right">
+                    API Key
+                  </Label>
+                  <Input
+                    id="zapi-key"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="meta" className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="meta-key" className="text-right">
+                    API Key
+                  </Label>
+                  <Input
+                    id="meta-key"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="360dialog" className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="360dialog-key" className="text-right">
+                    API Key
+                  </Label>
+                  <Input
+                    id="360dialog-key"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="ultramsg" className="space-y-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="ultramsg-key" className="text-right">
+                    API Key
+                  </Label>
+                  <Input
+                    id="ultramsg-key"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsWhatsAppDialogOpen(false)}>
@@ -209,6 +390,39 @@ const IntegrationsPage = () => {
               Cancel
             </Button>
             <Button onClick={handleOpenRouterSubmit}>Connect</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* HuggingFace Integration Dialog */}
+      <Dialog open={isHuggingFaceDialogOpen} onOpenChange={setIsHuggingFaceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Connect HuggingFace</DialogTitle>
+            <DialogDescription>
+              Enter your HuggingFace API key to access inference API models.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="huggingfaceKey" className="text-right">
+                API Key
+              </Label>
+              <Input
+                id="huggingfaceKey"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHuggingFaceDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleHuggingFaceSubmit}>Connect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

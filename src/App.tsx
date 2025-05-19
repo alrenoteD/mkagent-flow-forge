@@ -9,6 +9,7 @@ import FlowsPage from "./pages/FlowsPage";
 import FlowEditor from "./pages/FlowEditor";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import TemplatesPage from "./pages/TemplatesPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/flows/:id" element={<FlowEditor />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
