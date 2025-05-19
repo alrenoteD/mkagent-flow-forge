@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 interface Template {
   id: string;
@@ -68,6 +70,14 @@ const TemplatesPage = () => {
             Pre-built agent templates to help you get started quickly
           </p>
         </div>
+
+        <Alert className="mb-6">
+          <InfoIcon className="h-4 w-4" />
+          <AlertTitle>Looking to deploy your templates?</AlertTitle>
+          <AlertDescription>
+            Check out our <Link to="/deployment-guide" className="text-primary underline">deployment guide</Link> to learn how to run MKagent with internet access.
+          </AlertDescription>
+        </Alert>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {templates.map((template) => (

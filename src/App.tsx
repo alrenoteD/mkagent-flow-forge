@@ -11,6 +11,7 @@ import IntegrationsPage from "./pages/IntegrationsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import DeploymentGuidePage from "./pages/DeploymentGuidePage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/deployment-guide" element={<DeploymentGuidePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
