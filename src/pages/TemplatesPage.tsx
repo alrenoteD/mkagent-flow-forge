@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, BookOpenIcon, CopyIcon, ArrowRightIcon, QuestionIcon } from "lucide-react";
+import { InfoIcon, BookOpenIcon, CopyIcon, ArrowRightIcon, FileQuestionIcon } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -436,7 +436,7 @@ const TemplatesPage = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setFaqDialogOpen(true)}>
-              <QuestionIcon className="h-4 w-4 mr-2" />
+              <FileQuestionIcon className="h-4 w-4 mr-2" />
               FAQs
             </Button>
             <Button onClick={() => setHelpDialogOpen(true)}>
