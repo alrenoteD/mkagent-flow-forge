@@ -1,12 +1,43 @@
 
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import StatsCard from "@/components/dashboard/StatsCard";
 import { RecentAgents } from "@/components/dashboard/RecentAgents";
 import { BotIcon, PlugIcon } from "@/components/icons/Icons";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 const Index = () => {
+  const [activeAgents, setActiveAgents] = useState(0);
+  const [totalInteractions, setTotalInteractions] = useState(0);
+  const [connectedIntegrations, setConnectedIntegrations] = useState(0);
+  const [isNewUser, setIsNewUser] = useState(false);
+
+  useEffect(() => {
+    // Load stats from localStorage
+    try {
+      const savedFlows = JSON.parse(localStorage.getItem('saved-flows') || '[]');
+      const activeCount = savedFlows.filter((flow: any) => flow.status === 'active').length;
+      setActiveAgents(activeCount);
+      
+      // Check if this is a new user
+      setIsNewUser(savedFlows.length === 0);
+      
+      // Load interactions (placeholder, would come from backend in real implementation)
+      const interactions = localStorage.getItem('total-interactions') || '0';
+      setTotalInteractions(parseInt(interactions));
+      
+      // Load integrations (placeholder, would come from backend in real implementation)
+      const integrations = localStorage.getItem('connected-integrations') || '0';
+      setConnectedIntegrations(parseInt(integrations));
+    } catch (error) {
+      console.error("Error loading stats:", error);
+    }
+  }, []);
+
   return (
     <Layout>
       <div className="animate-fade-in">
@@ -24,16 +55,26 @@ const Index = () => {
           </Link>
         </div>
 
+        {isNewUser && (
+          <Alert className="mb-6">
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>Welcome to MKagent!</AlertTitle>
+            <AlertDescription>
+              Get started by browsing our <Link to="/templates" className="text-primary underline">templates gallery</Link> or creating a new agent from scratch.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <StatsCard
             title="Active Agents"
-            value={2}
+            value={activeAgents}
             icon={<BotIcon className="h-5 w-5 text-muted-foreground" />}
             description="Agents currently running"
           />
           <StatsCard
             title="Total Interactions"
-            value="143"
+            value={totalInteractions.toString()}
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -53,9 +94,9 @@ const Index = () => {
           />
           <StatsCard
             title="Connected Integrations"
-            value="2"
+            value={connectedIntegrations.toString()}
             icon={<PlugIcon className="h-5 w-5 text-muted-foreground" />}
-            description="WhatsApp, OpenRouter"
+            description={connectedIntegrations > 0 ? "WhatsApp, OpenRouter" : "No integrations configured"}
           />
         </div>
 
@@ -110,6 +151,25 @@ const Index = () => {
                     Manage Integrations
                   </Link>
                 </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link to="/deployment-guide">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mr-2 h-4 w-4"
+                    >
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    Deployment Guide
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -120,6 +180,3 @@ const Index = () => {
 };
 
 export default Index;
-
-// Import Card component to fix build error
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
