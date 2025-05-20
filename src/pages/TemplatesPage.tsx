@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, BookOpenIcon, CopyIcon, ArrowRightIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "@/components/ui/sonner";
 
 interface Template {
   id: string;
@@ -61,6 +63,20 @@ const templates: Template[] = [
 ];
 
 const TemplatesPage = () => {
+  const [filter, setFilter] = useState<string | null>(null);
+  
+  const filteredTemplates = filter 
+    ? templates.filter(template => template.category === filter || template.difficulty === filter)
+    : templates;
+    
+  const categories = Array.from(new Set(templates.map(t => t.category)));
+  const difficulties = ["beginner", "intermediate", "advanced"];
+  
+  const handleUseTemplate = (templateId: string) => {
+    // In a real implementation, this would create a new flow based on the template
+    toast.success("Template selected! Creating a new flow based on this template.");
+  };
+
   return (
     <Layout>
       <div className="animate-fade-in">
@@ -78,10 +94,46 @@ const TemplatesPage = () => {
             Check out our <Link to="/deployment-guide" className="text-primary underline">deployment guide</Link> to learn how to run MKagent with internet access.
           </AlertDescription>
         </Alert>
+        
+        <div className="mb-6 flex flex-wrap gap-2">
+          <Button 
+            variant={filter === null ? "default" : "outline"} 
+            size="sm"
+            onClick={() => setFilter(null)}
+          >
+            All
+          </Button>
+          
+          <div className="border-r mr-2 pr-2">
+            {categories.map(category => (
+              <Button 
+                key={category}
+                variant={filter === category ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setFilter(category)}
+                className="capitalize mr-2"
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+          
+          {difficulties.map(difficulty => (
+            <Button 
+              key={difficulty}
+              variant={filter === difficulty ? "secondary" : "outline"} 
+              size="sm"
+              onClick={() => setFilter(difficulty)}
+              className="capitalize"
+            >
+              {difficulty}
+            </Button>
+          ))}
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {templates.map((template) => (
-            <Card key={template.id} className="overflow-hidden">
+          {filteredTemplates.map((template) => (
+            <Card key={template.id} className="overflow-hidden transition-all hover:shadow-md">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <CardTitle>{template.title}</CardTitle>
@@ -99,15 +151,42 @@ const TemplatesPage = () => {
                   </Badge>
                 </div>
               </CardContent>
-              <CardFooter className="bg-muted/50">
-                <Link to={`/templates/${template.id}`} className="w-full">
-                  <Button variant="secondary" className="w-full">
-                    Use Template
-                  </Button>
-                </Link>
+              <CardFooter className="bg-muted/50 flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    toast.success("Template copied to clipboard!");
+                  }}
+                >
+                  <CopyIcon className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  className="flex-1"
+                  onClick={() => handleUseTemplate(template.id)}
+                >
+                  <ArrowRightIcon className="h-4 w-4 mr-2" />
+                  Use Template
+                </Button>
               </CardFooter>
             </Card>
           ))}
+        </div>
+        
+        <div className="mt-12 border rounded-lg p-6 bg-muted/20">
+          <div className="flex items-center mb-4">
+            <BookOpenIcon className="h-5 w-5 mr-2" />
+            <h2 className="text-xl font-semibold">How to use templates</h2>
+          </div>
+          <ol className="space-y-2 list-decimal list-inside text-muted-foreground">
+            <li>Browse the templates gallery and find one that matches your needs</li>
+            <li>Click "Use Template" to create a new flow based on the template</li>
+            <li>Customize the template in the flow editor to fit your specific requirements</li>
+            <li>Deploy your agent using our deployment guide</li>
+          </ol>
         </div>
       </div>
     </Layout>
